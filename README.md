@@ -13,9 +13,9 @@ and the purpose of this repo is to provide a swiftier API for Swift developers.
 
     let swiftLlama = try SwiftLlama(modelPath: path))
     
-### 2 Call it
+### 2 Text Generation
 
-### Call without streaming
+#### Call without streaming
 
     let response: String = try await swiftLlama.start(for: prompt)
 
@@ -33,6 +33,38 @@ and the purpose of this repo is to provide a swiftier API for Swift developers.
         } receiveValue: {[weak self] value in
             self?.result += value
         }.store(in: &cancallable)
+
+### 3 Embedding Extraction
+
+Extract semantic embeddings from text for similarity search, RAG, and other ML tasks:
+
+```swift
+// Initialize with an embedding model (e.g., nomic-embed-text-v1.5)
+let swiftLlama = try SwiftLlama(modelPath: "path/to/nomic-embed-text-v1.5.Q8_0.gguf")
+
+// Extract normalized embedding vector
+let embedding = try await swiftLlama.extractEmbedding(for: "Your text here")
+
+// The embedding is a normalized Float array (magnitude ≈ 1.0)
+print("Embedding dimension: \(embedding.count)") // e.g., 384 for nomic-embed
+```
+
+#### Example: Calculate Similarity
+
+```swift
+let embedding1 = try await swiftLlama.extractEmbedding(for: "The cat sat on the mat")
+let embedding2 = try await swiftLlama.extractEmbedding(for: "A feline rested on the rug")
+
+// Calculate cosine similarity (normalized vectors, so dot product = cosine similarity)
+let similarity = zip(embedding1, embedding2).reduce(0) { $0 + $1.0 * $1.1 }
+print("Similarity: \(similarity)") // High value (0.7-0.9) indicates similar meaning
+```
+
+#### Recommended Embedding Models
+
+- **nomic-embed-text-v1.5** (384 dimensions): [Download GGUF](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF)
+- Fast inference on iOS/macOS devices
+- Excellent for semantic search and RAG applications
 
 ## Test projects
 

@@ -138,6 +138,76 @@ class LlamaModel {
         tokens.removeAll()
         llama_kv_cache_clear(context)
     }
+    
+    // MARK: - Embedding Extraction
+    
+    /// Extract embedding vector from text
+    /// - Parameter text: The input text to embed
+    /// - Returns: Normalized embedding vector as [Float]
+    /// - Throws: SwiftLlamaError if embedding extraction fails
+    func extractEmbedding(for text: String) throws -> [Float] {
+        // Get embedding dimension from model
+        let embeddingDim = llama_n_embd(model)
+        
+        guard embeddingDim > 0 else {
+            throw SwiftLlamaError.invalidEmbeddingDimension
+        }
+        
+        // Tokenize the input text
+        let tokens = tokenize(text: text, addBos: true)
+        
+        guard !tokens.isEmpty else {
+            throw SwiftLlamaError.tokenizationFailed
+        }
+        
+        // Create batch for embeddings
+        var embeddingBatch = llama_batch_init(Int32(tokens.count), 0, 1)
+        defer { llama_batch_free(embeddingBatch) }
+        
+        // Add tokens to batch
+        for (i, token) in tokens.enumerated() {
+            embeddingBatch.add(token: token, position: Int32(i), seqIDs: [0], logit: false)
+        }
+        
+        // Enable embeddings mode
+        llama_set_embeddings(context, true)
+        defer {
+            // Always restore to generation mode
+            llama_set_embeddings(context, false)
+        }
+        
+        // Decode to generate embeddings
+        guard llama_decode(context, embeddingBatch) == 0 else {
+            throw SwiftLlamaError.embeddingExtractionFailed("Failed to decode for embeddings")
+        }
+        
+        // Get the embedding pointer
+        guard let embeddingPtr = llama_get_embeddings(context) else {
+            throw SwiftLlamaError.embeddingExtractionFailed("Failed to get embeddings from context")
+        }
+        
+        // Copy embeddings to Float array
+        var embedding = [Float](repeating: 0, count: Int(embeddingDim))
+        for i in 0..<Int(embeddingDim) {
+            embedding[i] = embeddingPtr[i]
+        }
+        
+        // Normalize the embedding vector (L2 normalization)
+        return normalize(embedding)
+    }
+    
+    /// Normalize a vector using L2 normalization
+    /// - Parameter vector: Input vector
+    /// - Returns: Normalized vector with magnitude ~1.0
+    private func normalize(_ vector: [Float]) -> [Float] {
+        let magnitude = sqrt(vector.reduce(0) { $0 + $1 * $1 })
+        
+        guard magnitude > 0 else {
+            return vector
+        }
+        
+        return vector.map { $0 / magnitude }
+    }
 
     deinit {
         llama_batch_free(batch)

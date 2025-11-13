@@ -160,4 +160,15 @@ public class SwiftLlama {
         }
         return result
     }
+    
+    // MARK: - Embedding Extraction
+    
+    /// Extract embedding vector from text using the loaded model
+    /// - Parameter text: The input text to embed
+    /// - Returns: Normalized embedding vector as [Float] with magnitude ~1.0
+    /// - Throws: SwiftLlamaError if embedding extraction fails
+    @SwiftLlamaActor
+    public func extractEmbedding(for text: String) async throws -> [Float] {
+        return try model.extractEmbedding(for: text)
+    }
 }
