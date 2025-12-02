@@ -14,20 +14,40 @@ let package = Package(
     products: [
         .library(name: "SwiftLlama", targets: ["SwiftLlama"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/ggerganov/llama.cpp.git", revision: "b6d6c5289f1c9c677657c380591201ddb210b649")
-    ],
     targets: [
-        .target(name: "SwiftLlama", 
-                dependencies: [
-                    "LlamaFramework",
-                    .product(name: "llama", package: "llama.cpp")
-                ]),
-        .testTarget(name: "SwiftLlamaTests", dependencies: ["SwiftLlama"]),
-        .binaryTarget(
-            name: "LlamaFramework",
-            url: "https://github.com/ggml-org/llama.cpp/releases/download/b5046/llama-b5046-xcframework.zip",
-            checksum: "c19be78b5f00d8d29a25da41042cb7afa094cbf6280a225abe614b03b20029ab"
-        )
+        .target(
+            name: "llama",
+            dependencies: [],
+            path: "Sources/llama",
+            exclude: [], // We rely on the provided sources
+            sources: ["src"],
+            publicHeadersPath: "include",
+            cSettings: [
+                .define("GGML_USE_ACCELERATE"),
+                .define("ACCELERATE_NEW_LAPACK"),
+                .define("ACCELERATE_LAPACK_ILP64"),
+                .define("GGML_USE_METAL"),
+                .define("GGML_USE_CPU"),
+                .headerSearchPath("src"),
+                .unsafeFlags(["-O3", "-fno-objc-arc"]) // -fno-objc-arc might be needed for .m files if they are not ARC compliant (ggml-metal often is manual ref counting or C-like)
+            ],
+            linkerSettings: [
+                .linkedFramework("Accelerate"),
+                .linkedFramework("Metal"),
+                .linkedFramework("MetalKit"),
+                .linkedFramework("Foundation")
+            ],
+            resources: [
+                .process("Resources")
+            ]
+        ),
+        .target(
+            name: "SwiftLlama",
+            dependencies: ["llama"]
+        ),
+        .testTarget(
+            name: "SwiftLlamaTests",
+            dependencies: ["SwiftLlama"]
+        ),
     ]
 )

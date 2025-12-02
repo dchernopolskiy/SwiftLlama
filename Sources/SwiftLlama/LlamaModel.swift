@@ -5,6 +5,7 @@ class LlamaModel {
     private let model: Model
     private let configuration: Configuration
     private let context: OpaquePointer
+    private let vocab: OpaquePointer
     private let sampler: UnsafeMutablePointer<llama_sampler>
     private var batch: Batch
     private var tokens: [Token]
@@ -30,6 +31,11 @@ class LlamaModel {
             throw SwiftLlamaError.others("Cannot load model at path \(path)")
         }
         self.model = model
+        
+        guard let vocab = llama_model_get_vocab(model) else {
+             throw SwiftLlamaError.others("Cannot load model vocabulary")
+        }
+        self.vocab = vocab
 
         guard let context = llama_new_context_with_model(model, configuration.contextParameters) else {
             throw SwiftLlamaError.others("Cannot load model context")
@@ -49,7 +55,7 @@ class LlamaModel {
 
     private func checkContextLength(context: Context, model: Model) throws {
         let n_ctx = llama_n_ctx(context)
-        let n_ctx_train = llama_n_ctx_train(model)
+        let n_ctx_train = llama_model_n_ctx_train(model)
         if n_ctx > n_ctx_train {
             throw SwiftLlamaError.others("Model was trained on \(n_ctx_train) context but tokens \(n_ctx) specified")
         }
@@ -74,7 +80,7 @@ class LlamaModel {
     func `continue`() throws -> String {
         let newToken = llama_sampler_sample(sampler, context, batch.n_tokens - 1)
 
-        if llama_token_is_eog(model, newToken) || generatedTokenAccount == n_len {
+        if llama_vocab_is_eog(vocab, newToken) || generatedTokenAccount == n_len {
             ended = true
             return ""
         }
@@ -102,7 +108,7 @@ class LlamaModel {
         var written = buf.withUnsafeMutableBufferPointer { p -> Int32 in
             guard let base = p.baseAddress else { return 0 }
             // Use the signature your llama module exposes (this matches your previous use: 6 args)
-            return llama_token_to_piece(model, token, base, cap, 0, false)
+            return llama_token_to_piece(vocab, token, base, cap, 0, false)
         }
 
         // If negative, allocate required size and retry
@@ -111,7 +117,7 @@ class LlamaModel {
             buf = [CChar](repeating: 0, count: Int(cap))
             written = buf.withUnsafeMutableBufferPointer { p -> Int32 in
                 guard let base = p.baseAddress else { return 0 }
-                return llama_token_to_piece(model, token, base, cap, 0, false)
+                return llama_token_to_piece(vocab, token, base, cap, 0, false)
             }
         }
 
@@ -129,14 +135,15 @@ class LlamaModel {
 
         return Array(unsafeUninitializedCapacity: n_tokens) { buffer, initializedCount in
             initializedCount = Int(
-                llama_tokenize(model, text, Int32(utf8Count), buffer.baseAddress, Int32(n_tokens), addBos, false)
+                llama_tokenize(vocab, text, Int32(utf8Count), buffer.baseAddress, Int32(n_tokens), addBos, false)
             )
         }
     }
 
     func clear() {
         tokens.removeAll()
-        llama_kv_cache_clear(context)
+        let memory = llama_get_memory(context)
+        llama_memory_clear(memory)
     }
     
     // MARK: - Embedding Extraction
@@ -147,7 +154,7 @@ class LlamaModel {
     /// - Throws: SwiftLlamaError if embedding extraction fails
     func extractEmbedding(for text: String) throws -> [Float] {
         // Get embedding dimension from model
-        let embeddingDim = llama_n_embd(model)
+        let embeddingDim = llama_model_n_embd(model)
         
         guard embeddingDim > 0 else {
             throw SwiftLlamaError.invalidEmbeddingDimension
