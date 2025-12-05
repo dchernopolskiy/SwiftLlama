@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2025-12-05
+
+### Fixed
+- **Duplicate symbols linker error (continued)**: Additional fixes for "35 duplicate symbols for architecture arm64"
+  - Changed library type to explicit `.static` to prevent dynamic linking issues
+  - Added `-fvisibility-inlines-hidden` for C++ inline functions
+  - Removed x86-specific source files (not needed for Apple Silicon/iOS)
+
 ## [0.8.1] - 2025-12-05
 
 ### Fixed

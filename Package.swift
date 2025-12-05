@@ -12,7 +12,7 @@ let package = Package(
         .visionOS(.v2)
     ],
     products: [
-        .library(name: "SwiftLlama", targets: ["SwiftLlama"]),
+        .library(name: "SwiftLlama", type: .static, targets: ["SwiftLlama"]),
     ],
     targets: [
         .target(
@@ -47,7 +47,7 @@ let package = Package(
                 .headerSearchPath("src"),
                 .headerSearchPath("src/ggml-cpu"),
                 .headerSearchPath("src/ggml-metal"),
-                .unsafeFlags(["-O3", "-fvisibility=hidden"])
+                .unsafeFlags(["-O3", "-fvisibility=hidden", "-fvisibility-inlines-hidden"])
             ],
             linkerSettings: [
                 .linkedFramework("Accelerate"),
