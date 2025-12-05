@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2025-12-05
+
+### Fixed
+- **Duplicate symbols linker error**: Fixed "35 duplicate symbols for architecture arm64" when linking SwiftLlama in iOS apps
+  - Added `static` keyword to inline C++ functions in `ggml-impl.h` to prevent multiple definitions
+  - Added `-fvisibility=hidden` compiler flag to hide internal symbols
+  - Ensures llama.cpp symbols are only exported once
+
 ## [0.8.0] - 2025-12-05
 
 ### Added

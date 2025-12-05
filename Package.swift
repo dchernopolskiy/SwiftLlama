@@ -36,7 +36,7 @@ let package = Package(
                 .headerSearchPath("src"),
                 .headerSearchPath("src/ggml-cpu"),
                 .headerSearchPath("src/ggml-metal"),
-                .unsafeFlags(["-O3", "-fno-objc-arc"])
+                .unsafeFlags(["-O3", "-fno-objc-arc", "-fvisibility=hidden"])
             ],
             cxxSettings: [
                 .define("GGML_USE_ACCELERATE"),
@@ -47,7 +47,7 @@ let package = Package(
                 .headerSearchPath("src"),
                 .headerSearchPath("src/ggml-cpu"),
                 .headerSearchPath("src/ggml-metal"),
-                .unsafeFlags(["-O3"])
+                .unsafeFlags(["-O3", "-fvisibility=hidden"])
             ],
             linkerSettings: [
                 .linkedFramework("Accelerate"),

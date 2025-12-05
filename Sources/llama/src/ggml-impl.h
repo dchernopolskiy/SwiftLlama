@@ -687,11 +687,11 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
 #include <vector>
 
 // nicer C++ syntax for ggml_can_fuse
-inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
+static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
     return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());
 }
 
-inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
+static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
                                    int                                 start_idx,
                                    std::initializer_list<enum ggml_op> ops,
                                    std::initializer_list<int>          outputs = {}) {
@@ -699,7 +699,7 @@ inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
 }
 
 // Return true if the edges in the graph match expectations.
-inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
+static inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
                              int                                       start_idx,
                              std::initializer_list<std::array<int, 3>> edges) {
     for (const auto & edge : edges) {
