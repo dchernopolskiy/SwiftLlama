@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2025-12-05
+
+### Fixed
+- **Missing llama symbols**: Removed `-fvisibility=hidden` flag that was hiding all public API symbols
+  - The flag hid symbols because `LLAMA_API` macro only adds visibility attributes when `LLAMA_SHARED` is defined
+  - Static libraries don't need visibility hiding (it's for shared libraries)
+  - All `llama_*` symbols are now properly exported
+
 ## [0.8.2] - 2025-12-05
 
 ### Fixed
