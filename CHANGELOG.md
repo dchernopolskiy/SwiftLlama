@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-12-05
+
+### Added
+- **Sampling Parameters Support**: New `SamplingParameters` struct for controlling text generation quality
+  - `temperature` - Controls randomness (0.0-1.0+, lower = more focused)
+  - `repeatPenalty` - Penalizes repeated tokens (1.0 = disabled, 1.1-1.2 typical)
+  - `topP` - Nucleus sampling threshold (0.9 typical)
+  - `topK` - Limits vocabulary to top K tokens (40 typical)
+  - `penaltyLastN` - Number of tokens to consider for repeat penalty
+  - `seed` - For reproducible sampling
+- Preset sampling configurations: `.default`, `.creative`, `.focused`
+- Convenience methods with individual parameters on `start(for:)`:
+  ```swift
+  try await llama.start(for: prompt, temperature: 0.3, repeatPenalty: 1.1, topP: 0.9, topK: 40)
+  ```
+
+### Changed
+- Updated llama.cpp to stable release b6906 (October 2025)
+- Sampler chain now properly applies: penalties → top-k → top-p → temperature → distribution
+- Updated deprecated llama.cpp API calls to new names
+
+### Fixed
+- **8B model gibberish output**: Proper sampling parameters now prevent degenerate repetition loops
+- **3B model consistency**: Lower temperature and repeat penalty produce more coherent output
+- Build errors from incompatible llama.cpp sources
+
+## [0.7.0] - Previous Release
+
 ### Added
 - **Embedding Extraction Support**: New `extractEmbedding(for:)` API for extracting semantic embeddings from text
   - Returns normalized Float vectors (magnitude ≈ 1.0)
@@ -27,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Internal `LlamaModel` now includes embedding extraction capabilities
 - Added L2 normalization for embedding vectors
 
-## [0.4.0] - Previous Release
+## [0.6.0] - Previous Release
 
 - Text generation with streaming support
 - AsyncStream and Combine publisher APIs
@@ -38,7 +66,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Migration Guide
 
-### From 0.4.0 to Unreleased
+### From 0.7.0 to 0.8.0
+
+No breaking changes. The new sampling parameters API is additive and backward compatible:
+
+```swift
+// New feature: Sampling parameters for better output quality
+let params = SamplingParameters(temperature: 0.3, repeatPenalty: 1.1, topP: 0.9, topK: 40)
+let response = try await swiftLlama.start(for: prompt, samplingParams: params)
+
+// Or use presets
+let response = try await swiftLlama.start(for: prompt, samplingParams: .focused)
+
+// Or individual parameters
+let response = try await swiftLlama.start(for: prompt, temperature: 0.3, repeatPenalty: 1.1)
+
+// Existing code still works (uses sensible defaults)
+let response = try await swiftLlama.start(for: prompt)
+```
+
+### From 0.6.0 to 0.7.0
 
 No breaking changes. The new embedding extraction API is additive:
 
