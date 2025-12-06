@@ -38,6 +38,10 @@ class LlamaModel {
         }
         self.vocab = vocab
 
+        // Debug: Check vocab type
+        let vocabType = llama_vocab_type(vocab)
+        print("[SwiftLlama] Vocab type: \(vocabType.rawValue)")
+
         guard let context = llama_init_from_model(model, configuration.contextParameters) else {
             throw SwiftLlamaError.others("Cannot load model context")
         }
