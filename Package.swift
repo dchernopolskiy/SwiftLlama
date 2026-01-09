@@ -19,7 +19,11 @@ let package = Package(
             name: "llama",
             dependencies: [],
             path: "Sources/llama",
-            exclude: [], // We rely on the provided sources
+            exclude: [
+                // Exclude architecture-specific implementations that cause duplicate symbols
+                // The main repack.cpp has fallback implementations that work on all architectures
+                "src/ggml-cpu/arch"
+            ],
             sources: ["src"],
             resources: [
                 .process("Resources")
